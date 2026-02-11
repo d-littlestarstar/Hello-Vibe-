@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>灵蛇绘卷 - 2026马年贺岁巅峰版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@700;900&display=swap');
+        
+        :root {
+            --palace-red: #b91c1c;
+            --palace-gold: #fbbf24;
+            --paper-cream: #f9f4e8;
+            --ink-black: #1a1a1a;
+            --grid-line: rgba(185, 28, 28, 0.15);
+        }
+
+        body {
+            background-color: #7f1d1d; 
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(185, 28, 28, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(153, 27, 27, 0.4) 0%, transparent 50%);
+            margin: 0;
+            overflow-x: hidden;
+            font-family: 'Noto Serif SC', serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            touch-action: none;
+        }
+
+        .chinese-font { font-family: 'Ma Shan Zheng', cursive; }
+        
+        /* 画轴展开动画 */
+        @keyframes scroll-open {
+            from { transform: scaleX(0); opacity: 0; }
+            to { transform: scaleX(1); opacity: 1; }
+        }
+        .scroll-animation { animation: scroll-open 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+        .paper-texture {
+            background-color: var(--paper-cream);
+            background-image: url('https://www.transparenttextures.com/patterns/rice-paper.png');
+            box-shadow: inset 0 0 80px rgba(185, 28, 28, 0.2);
+            position: relative;
+        }
+
+        .palace-border {
+            border: 10px solid transparent;
+            border-image: url('https://www.transparenttextures.com/patterns/oriental-tiles.png') 30 stretch;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 0 2px var(--palace-gold);
+        }
+
+        /* 物理格线：精确对齐 */
+        .grid-cell {
+            width: 100%;
+            height: 100%;
+            border-right: 0.5px solid var(--grid-line);
+            border-bottom: 0.5px solid var(--grid-line);
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 印章样式显示 */
+        .stamp-ui {
+            background: var(--palace-red);
+            border: 2px solid var(--palace-gold);
+            color: var(--palace-gold);
+            padding: 4px 8px;
+            text-align: center;
+            position: relative;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+            writing-mode: vertical-rl;
+            letter-spacing: 2px;
+        }
+        .stamp-ui::after {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            border: 1px solid var(--palace-gold);
+            opacity: 0.5;
+        }
+
+        /* 蛇身标准化 */
+        .snake-head {
+            background: linear-gradient(135deg, #064e3b, #059669);
+            border: 1px solid var(--palace-gold);
+            border-radius: 35%;
+            width: 90%;
+            height: 90%;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+        .snake-head.invincible {
+            background: linear-gradient(135deg, #fbbf24, #d97706);
+            box-shadow: 0 0 15px #fbbf24;
+            animation: god-glow 0.8s infinite alternate;
+        }
+        @keyframes god-glow {
+            from { transform: scale(0.9); filter: brightness(1); }
+            to { transform: scale(1.1); filter: brightness(1.3); }
+        }
+
+        .snake-body {
+            background: #10b981;
+            border-radius: 2px;
+            width: 88%;
+            height: 88%;
+            transition: all 0.1s;
+        }
+        .snake-body.invincible {
+            background: #fbbf24;
+            opacity: 0.5;
+            box-shadow: 0 0 8px #fbbf24;
+        }
+
+        .word-item {
+            background: var(--palace-red);
+            color: var(--palace-gold);
+            border: 1.5px solid var(--palace-gold);
+            border-radius: 50%;
+            width: 80%;
+            height: 80%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            animation: breathe 1.5s infinite;
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(0.85); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* 墨韵特效 */
+        .ink-particle {
+            position: absolute;
+            background: var(--ink-black);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 30;
+            animation: ink-fade 0.6s ease-out forwards;
+        }
+        @keyframes ink-fade {
+            to { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* 连珠提示动效 */
+        @keyframes combo-popup {
+            0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+        .combo-badge {
+            animation: combo-popup 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
+        }
+
+        .overlay-card {
+            background: rgba(253, 246, 227, 0.98);
+            border: 4px double var(--palace-red);
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            color: var(--palace-red);
+        }
+
+        .btn-traditional {
+            background: var(--palace-red);
+            color: var(--palace-gold);
+            border: 2px solid var(--palace-gold);
+            transition: all 0.2s;
+            box-shadow: 0 4px 0 #7f1d1d;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+        }
+        .btn-traditional:hover { background: #991b1b; transform: translateY(-1px); box-shadow: 0 5px 0 #7f1d1d; }
+        .btn-traditional:active { transform: translateY(2px); box-shadow: 0 2px 0 #7f1d1d; }
+
+        .btn-premium {
+            background: linear-gradient(to bottom, #991b1b, #7f1d1d);
+            border: 2px solid #fbbf24;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-premium::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(251, 191, 36, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        .game-wrapper {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            width: 420px;
+            max-width: 90vw;
+        }
+
+        #root { width: 100%; display: flex; justify-content: center; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useRef } = React;
+
+        const GRID_SIZE = 18;
+        const INITIAL_SNAKE = [{ x: 9, y: 9 }, { x: 9, y: 10 }, { x: 9, y: 11 }];
+        const WORDS = ['福', '春', '马', '瑞', '祥', '吉', '安', '康', '泰', '丰', '顺', '发', '禧', '财', '跃', '奔', '腾', '飞', '锦', '绣', '如', '意'];
+        const BLESSINGS = [
+            ["骏马腾千里", "灵蛇舞新春"],
+            ["马到功成日", "蛇舞报喜时"],
+            ["龙马传家宝", "灵蛇入画图"],
+            ["一马平川志", "灵蛇福满门"],
+            ["马首是瞻气", "灵蛇献瑞年"]
+        ];
+
+        const Direction = { UP: 'UP', DOWN: 'DOWN', LEFT: 'LEFT', RIGHT: 'RIGHT' };
+        const Status = { START: 'START', PLAYING: 'PLAYING', PAUSED: 'PAUSED', OVER: 'OVER' };
+        const Mode = { EASY: 300, NORMAL: 160, HARD: 130 };
+
+        const App = () => {
+            const [status, setStatus] = useState(Status.START);
+            const [gameMode, setGameMode] = useState(Mode.NORMAL);
+            const [snake, setSnake] = useState(INITIAL_SNAKE);
+            const [words, setWords] = useState([]);
+            const [obstacles, setObstacles] = useState([]);
+            const [lantern, setLantern] = useState(null);
+            const [score, setScore] = useState(0);
+            const [combo, setCombo] = useState(0);
+            const [invincibleLeft, setInvincibleLeft] = useState(0);
+            const [particles, setParticles] = useState([]);
+            const [history, setHistory] = useState([]);
+            const [blessing, setBlessing] = useState(BLESSINGS[0]);
+            const [highScore, setHighScore] = useState(() => Number(localStorage.getItem('fortune-snake-high-v11') || 0));
+
+            const invincibleRef = useRef(0);
+            const lastEatTime = useRef(0);
+            const nextDir = useRef(Direction.UP);
+            const moveInterval = useRef(null);
+            const touchStart = useRef(null);
+
+            const getValidPos = useCallback((currentSnake, currentWords, currentObstacles, currentLantern) => {
+                while (true) {
+                    const pos = { x: Math.floor(Math.random() * GRID_SIZE), y: Math.floor(Math.random() * GRID_SIZE) };
+                    const collides = [...currentSnake, ...currentWords, ...currentObstacles, ...(currentLantern ? [currentLantern] : [])]
+                                     .some(p => p.x === pos.x && p.y === pos.y);
+                    if (!collides) return pos;
+                }
+            }, []);
+
+            const createParticles = (x, y) => {
+                const newParticles = Array.from({ length: 8 }).map((_, i) => ({
+                    id: Date.now() + i,
+                    x: (x / GRID_SIZE) * 100 + '%',
+                    y: (y / GRID_SIZE) * 100 + '%',
+                    tx: (Math.random() - 0.5) * 60 + 'px',
+                    ty: (Math.random() - 0.5) * 60 + 'px',
+                    size: Math.random() * 6 + 4 + 'px'
+                }));
+                setParticles(p => [...p, ...newParticles]);
+                setTimeout(() => setParticles(p => p.filter(item => !newParticles.includes(item))), 600);
+            };
+
+            const startGame = (m) => {
+                setGameMode(m);
+                setSnake(INITIAL_SNAKE);
+                setScore(0);
+                setCombo(0);
+                setHistory([]);
+                invincibleRef.current = 0;
+                setInvincibleLeft(0);
+                nextDir.current = Direction.UP;
+
+                let obs = [];
+                if (m === Mode.HARD) {
+                    obs = [{ x: 4, y: 4, vx: 1, vy: 0 }, { x: 13, y: 13, vx: -1, vy: 0 }];
+                }
+                setObstacles(obs);
+
+                const w1 = getValidPos(INITIAL_SNAKE, [], obs, null);
+                w1.char = WORDS[Math.floor(Math.random() * WORDS.length)];
+                const w2 = getValidPos(INITIAL_SNAKE, [w1], obs, null);
+                w2.char = WORDS[Math.floor(Math.random() * WORDS.length)];
+                setWords([w1, w2]);
+                setLantern(null);
+                setStatus(Status.PLAYING);
+            };
+
+            const move = useCallback(() => {
+                setSnake(prev => {
+                    const head = prev[0];
+                    const next = { ...head };
+                    if (nextDir.current === Direction.UP) next.y--;
+                    if (nextDir.current === Direction.DOWN) next.y++;
+                    if (nextDir.current === Direction.LEFT) next.x--;
+                    if (nextDir.current === Direction.RIGHT) next.x++;
+
+                    const hitWall = next.x < 0 || next.x >= GRID_SIZE || next.y < 0 || next.y >= GRID_SIZE;
+                    const hitSelf = prev.some(p => p.x === next.x && p.y === next.y);
+                    const hitObs = obstacles.some(o => o.x === next.x && o.y === next.y);
+
+                    if (hitWall || ((hitSelf || hitObs) && invincibleRef.current <= 0)) {
+                        setBlessing(BLESSINGS[Math.floor(Math.random() * BLESSINGS.length)]);
+                        setStatus(Status.OVER);
+                        return prev;
+                    }
+
+                    const newSnake = [next, ...prev];
+                    const wordIdx = words.findIndex(w => w.x === next.x && w.y === next.y);
+                    const isLantern = lantern && lantern.x === next.x && lantern.y === next.y;
+
+                    if (wordIdx !== -1) {
+                        createParticles(next.x, next.y);
+                        const word = words[wordIdx];
+                        setHistory(h => [word.char, ...h.slice(0, 19)]);
+                        const now = Date.now();
+                        const timeDiff = now - lastEatTime.current;
+                        const newCombo = (timeDiff < 2500) ? combo + 1 : 1;
+                        setCombo(newCombo);
+                        lastEatTime.current = now;
+                        setScore(s => s + (10 * newCombo));
+                        const restWords = words.filter((_, i) => i !== wordIdx);
+                        const nextWord = getValidPos(newSnake, restWords, obstacles, lantern);
+                        nextWord.char = WORDS[Math.floor(Math.random() * WORDS.length)];
+                        setWords([...restWords, nextWord]);
+                        if (!lantern && Math.random() < 0.25) {
+                            setLantern(getValidPos(newSnake, [...restWords, nextWord], obstacles, null));
+                        }
+                    } else if (isLantern) {
+                        invincibleRef.current = 8000;
+                        setInvincibleLeft(8000);
+                        setLantern(null);
+                        newSnake.pop();
+                    } else {
+                        newSnake.pop();
+                    }
+
+                    if (obstacles.length > 0) {
+                        setObstacles(obs => obs.map(o => {
+                            let nx = o.x + o.vx, ny = o.y + o.vy, nvx = o.vx, nvy = o.vy;
+                            if (nx < 0 || nx >= GRID_SIZE) nvx = -nvx;
+                            if (ny < 0 || ny >= GRID_SIZE) nvy = -nvy;
+                            return { ...o, x: o.x + nvx, y: o.y + nvy, vx: nvx, vy: nvy };
+                        }));
+                    }
+                    return newSnake;
+                });
+            }, [words, obstacles, lantern, combo, getValidPos]);
+
+            useEffect(() => {
+                if (status === Status.PLAYING) {
+                    moveInterval.current = setInterval(move, gameMode);
+                    const timer = setInterval(() => {
+                        invincibleRef.current = Math.max(0, invincibleRef.current - 100);
+                        setInvincibleLeft(invincibleRef.current);
+                        if (Date.now() - lastEatTime.current > 2500 && combo > 0) {
+                            setCombo(0);
+                        }
+                    }, 100);
+                    return () => { clearInterval(moveInterval.current); clearInterval(timer); };
+                }
+            }, [status, gameMode, move, combo]);
+
+            useEffect(() => {
+                const handleKey = (e) => {
+                    if (e.code === 'Space') setStatus(s => s === Status.PLAYING ? Status.PAUSED : (s === Status.PAUSED ? Status.PLAYING : s));
+                    const d = nextDir.current;
+                    if (e.key === 'ArrowUp' && d !== Direction.DOWN) nextDir.current = Direction.UP;
+                    if (e.key === 'ArrowDown' && d !== Direction.UP) nextDir.current = Direction.DOWN;
+                    if (e.key === 'ArrowLeft' && d !== Direction.RIGHT) nextDir.current = Direction.LEFT;
+                    if (e.key === 'ArrowRight' && d !== Direction.LEFT) nextDir.current = Direction.RIGHT;
+                };
+                window.addEventListener('keydown', handleKey);
+                return () => window.removeEventListener('keydown', handleKey);
+            }, []);
+
+            useEffect(() => {
+                if (score > highScore) {
+                    setHighScore(score);
+                    localStorage.setItem('fortune-snake-high-v11', score.toString());
+                }
+            }, [score]);
+
+            return (
+                <div className="flex flex-col items-center justify-center p-4 w-full text-white min-h-screen" 
+                     onTouchStart={e => touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }}
+                     onTouchEnd={e => {
+                        if (!touchStart.current) return;
+                        const dx = e.changedTouches[0].clientX - touchStart.current.x, dy = e.changedTouches[0].clientY - touchStart.current.y;
+                        if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
+                        if (Math.abs(dx) > Math.abs(dy)) nextDir.current = dx > 0 ? Direction.RIGHT : Direction.LEFT;
+                        else nextDir.current = dy > 0 ? Direction.DOWN : Direction.UP;
+                        touchStart.current = null;
+                     }}>
+                    
+                    <header className="mb-6 text-center">
+                        <div className="bg-red-800 text-yellow-400 px-6 py-1 rounded-t-lg text-xs font-bold tracking-[0.5em] shadow-lg border-b border-yellow-600">龙马精神 · 灵蛇舞墨</div>
+                        <h1 className="chinese-font text-5xl pt-2 drop-shadow-2xl">灵蛇绘卷</h1>
+                    </header>
+
+                    {/* 整体容器使用 items-center 确保水平居中对齐 */}
+                    <div className="flex flex-col md:flex-row gap-6 items-center justify-center relative w-full max-w-6xl">
+                        
+                        {/* 左：印章分榜 - 增加 w-36 类以平衡视觉重量 */}
+                        <div className="hidden md:flex flex-col gap-4 w-36 items-center">
+                            <div className="stamp-ui">
+                                <span className="text-[10px] opacity-80 font-black">巅峰纪录</span>
+                                <span className="text-xl font-bold">{highScore}</span>
+                            </div>
+                            <div className="stamp-ui !bg-green-900 !border-green-400">
+                                <span className="text-[10px] opacity-80 font-black">当场福元</span>
+                                <span className="text-xl font-bold">{score}</span>
+                            </div>
+                        </div>
+
+                        {/* 中：棋盘核心区 */}
+                        <div className="game-wrapper scroll-animation palace-border paper-texture z-10">
+                            {combo > 1 && (
+                                <div className="absolute top-4 left-4 z-50 combo-badge">
+                                    <div className="chinese-font text-red-700 text-2xl font-bold italic flex flex-col items-start leading-none">
+                                        <span className="text-yellow-600 drop-shadow-md">连珠 x{combo}!</span>
+                                        <span className="text-sm bg-yellow-400/90 text-red-900 px-2 py-0.5 rounded-full not-italic tracking-tighter mt-1">福运连连</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid w-full h-full" style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)` }}>
+                                {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, i) => (
+                                    <div key={i} className="grid-cell"></div>
+                                ))}
+                            </div>
+
+                            <div className="absolute inset-0 pointer-events-none">
+                                {snake.map((p, i) => (
+                                    <div key={`s-${i}`} className="absolute flex items-center justify-center" style={{ left: `${(p.x/GRID_SIZE)*100}%`, top: `${(p.y/GRID_SIZE)*100}%`, width: `${100/GRID_SIZE}%`, height: `${100/GRID_SIZE}%` }}>
+                                        <div className={`${i === 0 ? 'snake-head' : 'snake-body'} ${invincibleLeft > 0 ? 'invincible' : ''}`}>
+                                            {i === 0 && <><div className="w-1 h-1 bg-white rounded-full"></div><div className="w-1 h-1 bg-white rounded-full"></div></>}
+                                        </div>
+                                    </div>
+                                ))}
+                                {words.map((w, i) => (
+                                    <div key={`w-${i}`} className="absolute flex items-center justify-center" style={{ left: `${(w.x/GRID_SIZE)*100}%`, top: `${(w.y/GRID_SIZE)*100}%`, width: `${100/GRID_SIZE}%`, height: `${100/GRID_SIZE}%` }}>
+                                        <div className="word-item chinese-font">{w.char}</div>
+                                    </div>
+                                ))}
+                                {obstacles.map((o, i) => (
+                                    <div key={`o-${i}`} className="absolute flex items-center justify-center text-xl" style={{ left: `${(o.x/GRID_SIZE)*100}%`, top: `${(o.y/GRID_SIZE)*100}%`, width: `${100/GRID_SIZE}%`, height: `${100/GRID_SIZE}%` }}>🧨</div>
+                                ))}
+                                {lantern && (
+                                    <div className="absolute flex items-center justify-center text-2xl animate-bounce" style={{ left: `${(lantern.x/GRID_SIZE)*100}%`, top: `${(lantern.y/GRID_SIZE)*100}%`, width: `${100/GRID_SIZE}%`, height: `${100/GRID_SIZE}%` }}>🏮</div>
+                                )}
+                                {particles.map(p => (
+                                    <div key={p.id} className="ink-particle" style={{ left: p.x, top: p.y, width: p.size, height: p.size, '--tx': p.tx, '--ty': p.ty }} />
+                                ))}
+                            </div>
+
+                            {status === Status.START && (
+                                <div className="absolute inset-0 z-40 overlay-card m-6 flex flex-col items-center justify-center p-8">
+                                    <div className="w-16 h-16 bg-red-800 rounded-full flex items-center justify-center mb-6 shadow-2xl border-2 border-yellow-500 animate-pulse">
+                                        <i className="fa-solid fa-horse text-3xl text-yellow-400"></i>
+                                    </div>
+                                    <h2 className="chinese-font text-3xl text-red-900 mb-6 font-bold">龙马跃笔 · 灵蛇绘岁</h2>
+                                    <div className="bg-red-800/5 p-5 rounded-3xl border-2 border-red-900/10 flex flex-col gap-3 w-full max-w-[220px] shadow-inner">
+                                        <button onClick={() => startGame(Mode.EASY)} className="btn-traditional py-2.5 rounded-xl font-black text-sm">闲庭版 · 走马看花</button>
+                                        <button onClick={() => startGame(Mode.NORMAL)} className="btn-traditional py-2.5 rounded-xl font-black text-sm">戏墨版 · 龙马精神</button>
+                                        <button onClick={() => startGame(Mode.HARD)} className="btn-traditional btn-premium py-2.5 rounded-xl font-black text-sm">腾龙版 · 巅峰极诣</button>
+                                    </div>
+                                    <p className="mt-4 text-[10px] text-red-800/40 uppercase tracking-[0.2em] font-bold">二零二六 · 马到成功</p>
+                                </div>
+                            )}
+
+                            {status === Status.OVER && (
+                                <div className="absolute inset-0 z-50 overlay-card m-6 flex flex-col items-center justify-center p-8 text-center">
+                                    <h2 className="chinese-font text-5xl text-red-800 mb-4">墨韵福至</h2>
+                                    <div className="mb-6 py-4 px-6 bg-red-800/5 rounded-2xl border-2 border-red-900/10 italic">
+                                        <p className="chinese-font text-2xl text-red-900 mb-2">{blessing[0]}</p>
+                                        <p className="chinese-font text-2xl text-red-900">{blessing[1]}</p>
+                                    </div>
+                                    <div className="flex gap-4 mb-8">
+                                        <div className="text-red-900 px-4">
+                                            <p className="text-[10px] uppercase font-black opacity-40">马到成功福</p>
+                                            <p className="text-3xl font-black">{score}</p>
+                                        </div>
+                                        <div className="w-px bg-red-200" />
+                                        <div className="text-red-900 px-4">
+                                            <p className="text-[10px] uppercase font-black opacity-40">历史造诣</p>
+                                            <p className="text-3xl font-black">{highScore}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setStatus(Status.START)} className="btn-traditional py-4 rounded-2xl font-bold text-xl shadow-2xl">再绘宏图</button>
+                                </div>
+                            )}
+
+                            {invincibleLeft > 0 && (
+                                <div className="absolute top-0 inset-x-0 h-1 bg-yellow-500 origin-left" style={{ transform: `scaleX(${invincibleLeft/8000})`, transition: 'transform 0.1s linear' }} />
+                            )}
+                        </div>
+
+                        {/* 右：锦囊 - 固定 w-36 与左侧对等 */}
+                        <div className="flex flex-col gap-4 w-full md:w-36 items-center">
+                            <div className="bg-white/95 p-3 rounded-2xl border-2 border-red-100 shadow-xl w-full">
+                                <h4 className="chinese-font text-xl text-red-900 mb-2 border-b border-red-100 pb-1 text-center">锦囊妙计</h4>
+                                <ul className="text-[10px] text-red-800 space-y-2 font-bold leading-relaxed">
+                                    <li>· <span className="text-yellow-600">连珠</span>：马不停蹄连续吃福！</li>
+                                    <li>· <span className="text-red-600">炮竹</span>：非金身切莫触碰。</li>
+                                    <li>· <span className="text-green-600">格线</span>：精准落笔之基。</li>
+                                </ul>
+                            </div>
+                            <div className="flex md:hidden justify-around items-center bg-red-900 p-3 rounded-2xl border-2 border-yellow-500/50 w-full">
+                                <div className="text-center"><p className="text-[8px] opacity-60">福元</p><p className="font-bold">{score}</p></div>
+                                <div className="text-center"><p className="text-[8px] opacity-60">纪录</p><p className="font-bold">{highScore}</p></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer className="mt-12 text-white/30 text-[10px] tracking-[0.3em] font-bold text-center">
+                        2026 马到成功 · 灵蛇绘卷 · 墨林雅集 出品
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
